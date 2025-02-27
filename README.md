@@ -1,5 +1,3 @@
----
-
 # A Simple Compiler for the STORMCOMP HX1600D1 Computer
 
 **Compiler made by [me](https://steamcommunity.com/id/minecrafter8001/)**  
@@ -10,8 +8,6 @@ AIRA is the instruction register.
 AIRB is the data register.
 
 Instructions on how to use and program the computer are on its [workshop page](https://steamcommunity.com/sharedfiles/filedetails/?id=3425013619).
-
----
 
 ### Notes:
 - **Numbers at the start of a line** are filtered out before compilation but are not required.
