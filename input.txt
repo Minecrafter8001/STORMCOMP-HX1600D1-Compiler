@@ -1,0 +1,20 @@
+--IO Readback example
+--Main Loop
+1 LD 10 --IO card address
+2 OUT 0 --initialize IO Card
+3 LD 9 --Load jump address for keypad reader subroutine
+4 JUN 0 --Jump to subroutine
+5 LDA 1 --Move the result from the D register to the A register
+6 OUT 1 --Output in the A register to the IO device
+7 LD 3 --Load jump address to start over
+8 JUN 0 --Jump to start
+
+--Keypad Reader Subroutine
+9 INP 1 --Read status from keypad to A register (has any data been sent?)
+10 LDD 1 --Move the status to the D register
+11 LD 9 --Load 9 in A register (address to read status again)
+12 JCN 2 --If the status is 0, jump to read status again, else, continue
+13 INP 2 --Read data from keypad to A register
+14 LDD 1 --Move the data from the A register to the D register
+15 LD 5 --Load jump return address
+16 JUN 0 --Jump back to main loop
