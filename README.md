@@ -3,7 +3,7 @@ Compiler made by [me](https://steamcommunity.com/id/minecrafter8001/)
 Computer made by [MaxBuilder](https://steamcommunity.com/profiles/76561198145551187)
 
 Clone the repo, put the compiler.py file in its own folder with an input.txt file that contains the assembly code for your program.  
-Double-click to run and copy the two variable names from the output.txt file into the microcontroller (or manually enter them into the computer when it's spawned).  
+run the compiler with a python interpreter and copy the two variable names from the output.txt file into the microcontroller (or manually enter them into the computer when it's spawned).  
 AIRA is the instruction register.  
 AIRB is the data register.
 
