@@ -7,5 +7,5 @@ Double-click to run and copy the two variable names from the output.txt file int
 AIRA is the instruction register.  
 AIRB is the data register.
 
-Instructions on how to use the computer are on its workshop page:  
+Instructions on how to use and program the computer are on its workshop page:  
 https://steamcommunity.com/sharedfiles/filedetails/?id=3425013619
