@@ -9,3 +9,20 @@ AIRB is the data register.
 
 Instructions on how to use and program the computer are on its workshop page:  
 https://steamcommunity.com/sharedfiles/filedetails/?id=3425013619
+
+notes:
+numbers at the start of a line are filtered out before compliation but are not required
+lines starting with "--" are also ignored for comments
+example:
+"
+--load 5 into accumulator
+5 LD 5
+SUB 2
+" 
+becomes:
+"
+LD 5
+SUB 2
+"
+
+
