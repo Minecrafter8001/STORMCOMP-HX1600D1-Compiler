@@ -19,9 +19,9 @@ Instructions on how to use and program the computer are on its [workshop page](h
 5 LD 5
 SUB 2
 ```
-
 Becomes:
 ```plaintext
 LD 5
 SUB 2
 ```
+To the compiler
