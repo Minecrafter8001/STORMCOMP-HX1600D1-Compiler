@@ -1,118 +1,120 @@
 import re
-import sys
 
-
-def assemble(assembly_lines):
-    symbols = {}
-    address = 0
-
-    # First pass: collect labels and their addresses
-    for line in assembly_lines:
-        # Strip comments and whitespace
-        line = re.split(r"--", line)[0].strip()
+def assemble(assembly_code):
+    # Preprocess the assembly code
+    lines = [line.strip() for line in assembly_code.split('\n')]
+    
+    # First pass: Build symbol table
+    symbol_table = {}
+    current_address = 0
+    label_pattern = re.compile(r'\(([^)]+)\)')
+    
+    for line in lines:
+        # Remove comments
+        line = line.split('--')[0].strip()
         if not line:
             continue
+        
+        # Remove leading line numbers if present
+        if line[0].isdigit():
+            line = re.sub(r'^\d+\s*', '', line).strip()
+        
+        # Extract labels
+        while True:
+            match = label_pattern.search(line)
+            if not match:
+                break
+            label = match.group(1).strip()
+            if label in symbol_table:
+                raise ValueError(f"Duplicate label: {label}")
+            symbol_table[label] = current_address
+            line = line.replace(match.group(0), '', 1).strip()
+        
+        if line:
+            current_address += 1
 
-        # Extract label if present
-        label_match = re.search(r"\(\s*(\w+)\s*\)\s*$", line)
-        if label_match:
-            label = label_match.group(1)
-            symbols[label] = address
-            line = line[: label_match.start()].strip()
-
-        # Check for line number and process instruction
-        parts = line.split()
-        if parts:
-            # Skip line number if present
-            if parts[0].isdigit():
-                parts = parts[1:]
-            if parts:
-                address += 1
-
-    # Second pass: generate instruction and data lists
-    instruction_list = []
-    data_list = []
-    address = 0  # Reset address counter for second pass
-
-    mnemonic_to_opcode = {
-        "NOP": 0,
-        "LD": 1,
-        "LDA": 2,
-        "LDD": 3,
-        "LDM": 4,
-        "JUN": 7,
-        "JCN": 8,
-        "ADD": 9,
-        "SUB": 10,
-        "MUL": 11,
-        "DIV": 12,
-        "INC": 13,
-        "DEC": 14,
-        "INP": 15,
-        "OUT": 16,
-        "DLY": 17,
-        "HLT": 18,
+    # Second pass: Generate machine code
+    air_a = []
+    air_b = []
+    current_address = 0
+    opcode_table = {
+        'NOP': (0, None),
+        'LD': (1, 'any'),
+        'LDA': (2, [1, 2]),
+        'LDD': (3, [1, 2]),
+        'LDM': (4, [0, 1, 2]),
+        'JUN': (7, [0]),
+        'JCN': (8, [1, 2, 3, 4, 5, 6]),
+        'ADD': (9, [0]),
+        'SUB': (10, [0]),
+        'MUL': (11, [0]),
+        'DIV': (12, [0]),
+        'INC': (13, [0, 1, 2]),
+        'DEC': (14, [0, 1, 2]),
+        'INP': (15, [1, 2]),
+        'OUT': (16, 'any'),
+        'DLY': (17, 'any'),
+        'HLT': (18, [0]),
     }
 
-    for line in assembly_lines:
-        # Strip comments and whitespace
-        line = re.split(r"--", line)[0].strip()
+    for line in lines:
+        # Remove comments and whitespace
+        line = line.split('--')[0].strip()
+        if not line:
+            continue
+        
+        # Remove leading line numbers if present
+        if line[0].isdigit():
+            line = re.sub(r'^\d+\s*', '', line).strip()
+        
+        # Remove labels from line
+        while label_pattern.search(line):
+            line = label_pattern.sub('', line).strip()
         if not line:
             continue
 
-        # Remove label from line
-        line = re.sub(r"\(\s*\w+\s*\)\s*$", "", line).strip()
-        parts = line.split()
-        if not parts:
-            continue
-
-        # Skip line number if present
-        if parts[0].isdigit():
-            parts = parts[1:]
-        if not parts:
-            continue
-
+        # Parse instruction
+        parts = re.split(r'\s+', line, 1)
         mnemonic = parts[0].upper()
-        operand = parts[1] if len(parts) > 1 else "0"
+        operand = parts[1].split('--')[0].strip() if len(parts) > 1 else None
 
-        # Get opcode
-        opcode = mnemonic_to_opcode.get(mnemonic)
-        if opcode is None:
-            raise ValueError(f"Unknown mnemonic '{mnemonic}' in line: {line}")
+        # Get opcode info
+        if mnemonic not in opcode_table:
+            raise ValueError(f"Invalid mnemonic: {mnemonic}")
+        opcode, allowed = opcode_table[mnemonic]
 
         # Process operand
-        data = 0
-        if operand.startswith("@"):
-            label_name = operand[1:]
-            data = symbols.get(label_name)
-            if data is None:
-                raise ValueError(f"Undefined label '{label_name}' in line: {line}")
-        else:
-            try:
-                data = int(operand)
-            except ValueError:
-                raise ValueError(f"Invalid operand '{operand}' in line: {line}")
+        operand_value = 0
+        if operand:
+            if operand.startswith('@'):
+                label = operand[1:]
+                if label not in symbol_table:
+                    raise ValueError(f"Undefined label: {label}")
+                operand_value = symbol_table[label] + 1
+            else:
+                try:
+                    operand_value = int(operand)
+                except ValueError:
+                    raise ValueError(f"Invalid operand: {operand}")
 
-        instruction_list.append(opcode)
-        data_list.append(data)
-        address += 1
+            # Validate operand
+            if allowed != 'any':
+                if isinstance(allowed, list) and operand_value not in allowed:
+                    raise ValueError(f"Invalid operand for {mnemonic}: {operand}")
 
-    return instruction_list, data_list
+        air_a.append(opcode)
+        air_b.append(operand_value)
+        current_address += 1
 
+    return air_a, air_b
 
-
+# Example usage
 if __name__ == "__main__":
-    with open("input.txt", "r") as file:
-        assembly_code = file.read()
-
-    # Split the assembly code into lines
-    lines = [line.strip() for line in assembly_code.strip().split("\n")]
-
-    try:
-        instructions, data = assemble(lines)
-        output = f"AIRA = {{{', '.join(map(str, instructions))}}}\nAIRB = {{{', '.join(map(str, data))}}}"
-        print("Compiled successfully.")
-        with open("output.txt", "w") as file:
-            file.write(output)
-    except ValueError as e:
-        print("Compilation failed:", e)
+    with open('input.txt', 'r') as f:
+        assembly_code = f.read()
+    
+    air_a, air_b = assemble(assembly_code)
+    
+    with open('output.txt', 'w') as f:
+        f.write('AIRA = {' + ', '.join(map(str, air_a)) + '}\n')
+        f.write('AIRB = {' + ', '.join(map(str, air_b)) + '}\n')
